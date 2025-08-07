@@ -1,0 +1,37 @@
+---
+- name: Install and run Apache Tomcat
+  hosts: your_target_hosts
+  become: yes
+
+  vars:
+    tomcat_version: 9.0.85
+    tomcat_install_dir: /opt/tomcat
+
+  tasks:
+    - name: Install Java
+      apt:
+        name: default-jdk
+        state: present
+      when: ansible_os_family == "Debian"
+
+    - name: Create Tomcat directory
+      file:
+        path: "{{ tomcat_install_dir }}"
+        state: directory
+
+    - name: Download Tomcat
+      get_url:
+        url: "https://downloads.apache.org/tomcat/tomcat-9/v{{ tomcat_version }}/bin/apache-tomcat-{{ tomcat_version }}.tar.gz"
+        dest: "/tmp/apache-tomcat-{{ tomcat_version }}.tar.gz"
+
+    - name: Extract Tomcat
+      unarchive:
+        src: "/tmp/apache-tomcat-{{ tomcat_version }}.tar.gz"
+        dest: "{{ tomcat_install_dir }}"
+        remote_src: yes
+        extra_opts: [--strip-components=1]
+
+    - name: Start Tomcat
+      shell: "{{ tomcat_install_dir }}/bin/startup.sh"
+      args:
+        chdir: "{{ tomcat_install_dir }}/bin"
